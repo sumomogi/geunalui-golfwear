@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Wardrobe from './ui/Wardrobe';
 import AddItem from './ui/AddItem';
 import People from './ui/People';
@@ -14,13 +14,6 @@ type Route =
 export default function App() {
   const [route, setRoute] = useState<Route>({ name: 'wardrobe' });
 
-  useEffect(() => {
-    document.body.style.margin = '0';
-    document.body.style.fontFamily =
-      "'Pretendard JP', system-ui, sans-serif";
-    document.body.style.background = '#f4f1ea';
-  }, []);
-
   const tabs: { key: Route['name']; label: string }[] = [
     { key: 'wardrobe', label: '옷장' },
     { key: 'people', label: '동반자' },
@@ -29,8 +22,8 @@ export default function App() {
   ];
 
   return (
-    <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', paddingBottom: 64 }}>
-      <main style={{ padding: 16 }}>
+    <div className="app">
+      <main key={route.name}>
         {route.name === 'wardrobe' && <Wardrobe onAdd={() => setRoute({ name: 'addItem' })} />}
         {route.name === 'addItem' && <AddItem onDone={() => setRoute({ name: 'wardrobe' })} />}
         {route.name === 'people' && <People />}
@@ -42,17 +35,10 @@ export default function App() {
           <Recommendation roundId={route.roundId} onBack={() => setRoute({ name: 'newRound' })} />
         )}
       </main>
-      <nav style={{
-        position: 'fixed', bottom: 0, left: 0, right: 0, maxWidth: 480, margin: '0 auto',
-        display: 'flex', background: '#fff', borderTop: '1px solid #e0ddd5',
-      }}>
+      <nav className="tabbar">
         {tabs.map(t => (
           <button key={t.key} onClick={() => setRoute({ name: t.key } as Route)}
-            style={{
-              flex: 1, padding: 14, border: 'none', background: 'none',
-              fontWeight: route.name === t.key ? 700 : 400,
-              color: route.name === t.key ? '#2f7d4f' : '#888',
-            }}>{t.label}</button>
+            className={route.name === t.key ? 'on' : ''}>{t.label}</button>
         ))}
       </nav>
     </div>

@@ -54,35 +54,34 @@ export default function NewRound({ onRecommend }: { onRecommend: (roundId: strin
   }
 
   return (
-    <div>
+    <div className="rise">
       <h2>라운드 만들기</h2>
-      <Field label="날짜"><input type="date" value={date} onChange={e => setDate(e.target.value)} style={{ padding: 8 }} /></Field>
-      <Field label="티오프"><input type="time" value={teeOff} onChange={e => setTeeOff(e.target.value)} style={{ padding: 8 }} /></Field>
-      <Field label="코스">
-        <select value={courseId} onChange={e => setCourseId(e.target.value)} style={{ padding: 8 }}>
-          <option value="">(선택 안 함)</option>
-          {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
-      </Field>
-      <Field label="위도 / 경도 (코스 위치)">
-        <div style={{ display: 'flex', gap: 8 }}>
-          <input value={lat} onChange={e => setLat(e.target.value)} style={{ padding: 8, width: 100 }} />
-          <input value={lon} onChange={e => setLon(e.target.value)} style={{ padding: 8, width: 100 }} />
-        </div>
-      </Field>
-      <Field label="동반자">
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-          {people.map(p => (
-            <button key={p.id} type="button" onClick={() => toggleCompanion(p.id)}
-              style={{
-                padding: '6px 12px', borderRadius: 20, border: '1px solid #ccc',
-                background: companionIds.includes(p.id) ? '#2f7d4f' : '#fff',
-                color: companionIds.includes(p.id) ? '#fff' : '#333',
-              }}>{p.name}</button>
-          ))}
-        </div>
-      </Field>
-      {err && <p style={{ color: '#c33' }}>{err}</p>}
+      <div className="glass card">
+        <Field label="날짜"><input type="date" value={date} onChange={e => setDate(e.target.value)} /></Field>
+        <Field label="티오프"><input type="time" value={teeOff} onChange={e => setTeeOff(e.target.value)} /></Field>
+        <Field label="코스">
+          <select value={courseId} onChange={e => setCourseId(e.target.value)}>
+            <option value="">(선택 안 함)</option>
+            {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+        </Field>
+        <Field label="위도 / 경도 (코스 위치)">
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input value={lat} onChange={e => setLat(e.target.value)} />
+            <input value={lon} onChange={e => setLon(e.target.value)} />
+          </div>
+        </Field>
+        <Field label="동반자">
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {people.length === 0 && <span className="muted" style={{ fontSize: 13 }}>동반자 탭에서 먼저 등록하세요</span>}
+            {people.map(p => (
+              <button key={p.id} type="button" onClick={() => toggleCompanion(p.id)}
+                className={companionIds.includes(p.id) ? 'chip-toggle on' : 'chip-toggle'}>{p.name}</button>
+            ))}
+          </div>
+        </Field>
+      </div>
+      {err && <p style={{ color: 'var(--danger)' }}>{err}</p>}
       <PrimaryButton onClick={go} disabled={loading}>{loading ? '날씨 불러오는 중…' : '코디 추천받기'}</PrimaryButton>
     </div>
   );

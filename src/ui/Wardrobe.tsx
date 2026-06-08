@@ -17,19 +17,19 @@ export default function Wardrobe({ onAdd }: { onAdd: () => void }) {
   useEffect(() => () => { urls.forEach(u => URL.revokeObjectURL(u)); }, [urls]);
 
   return (
-    <div>
-      <h2>옷장 ({items.length})</h2>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16 }}>
-        {items.map(it => (
-          <div key={it.id} style={{ background: '#fff', borderRadius: 10, overflow: 'hidden' }}>
-            <div style={{
-              aspectRatio: '1', background: it.colors[0] ?? '#ddd',
-              backgroundSize: 'cover', backgroundPosition: 'center',
+    <div className="rise">
+      <h2>옷장 <span className="count">{items.length}</span></h2>
+      {items.length === 0 && (
+        <p className="muted" style={{ marginBottom: 16 }}>아직 등록된 옷이 없어요. 아래에서 첫 옷을 등록해보세요.</p>
+      )}
+      <div className="grid">
+        {items.map((it, i) => (
+          <div key={it.id} className="glass tile rise" style={{ animationDelay: `${i * 0.03}s` }}>
+            <div className="img" style={{
+              background: it.colors[0] ?? '#ddd',
               backgroundImage: urls.has(it.id) ? `url(${urls.get(it.id)})` : undefined,
             }} />
-            <div style={{ fontSize: 11, padding: 4, color: '#555' }}>
-              {CATEGORY_LABEL[it.category]}
-            </div>
+            <div className="cap">{CATEGORY_LABEL[it.category]}</div>
           </div>
         ))}
       </div>

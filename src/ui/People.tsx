@@ -22,23 +22,20 @@ export default function People() {
   }
 
   return (
-    <div>
-      <h2>동반자</h2>
+    <div className="rise">
+      <h2>동반자 <span className="count">{people.length}</span></h2>
       {people.map(p => (
-        <div key={p.id} style={{ background: '#fff', borderRadius: 10, padding: 12, marginBottom: 8,
-          display: 'flex', justifyContent: 'space-between' }}>
+        <div key={p.id} className="glass row">
           <span><b>{p.name}</b> · {p.relationship}</span>
-          <span style={{ color: '#888' }}>격식 {p.formalityExpectation}
-            <button onClick={async () => { await repository.deletePerson(p.id); reload(); }}
-              style={{ marginLeft: 8, border: 'none', background: 'none', color: '#c33' }}>삭제</button>
+          <span className="meta">격식 {p.formalityExpectation}
+            <button className="del-btn"
+              onClick={async () => { await repository.deletePerson(p.id); reload(); }}>삭제</button>
           </span>
         </div>
       ))}
-      <div style={{ background: '#fff', borderRadius: 12, padding: 16, marginTop: 12 }}>
-        <Field label="이름"><input value={name} onChange={e => setName(e.target.value)} style={{ padding: 8 }} /></Field>
-        <Field label="관계">
-          <input value={relationship} onChange={e => setRelationship(e.target.value)} style={{ padding: 8 }} />
-        </Field>
+      <div className="glass card" style={{ marginTop: 14 }}>
+        <Field label="이름"><input value={name} onChange={e => setName(e.target.value)} /></Field>
+        <Field label="관계"><input value={relationship} onChange={e => setRelationship(e.target.value)} /></Field>
         <Field label="격식 기대치"><Rating value={formalityExpectation} onChange={setFormality} /></Field>
         <PrimaryButton onClick={add}>추가</PrimaryButton>
       </div>
