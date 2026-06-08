@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { repository } from '../data/indexeddb-repository';
-import { blobUrl } from '../lib/image';
 import { CATEGORY_LABEL, type ClothingItem } from '../domain/types';
 import { PrimaryButton } from './components';
 
@@ -8,6 +7,14 @@ export default function Wardrobe({ onAdd }: { onAdd: () => void }) {
   const [items, setItems] = useState<ClothingItem[]>([]);
 
   useEffect(() => { repository.listItems().then(setItems); }, []);
+
+  const urls = useMemo(() => {
+    const map = new Map<string, string>();
+    items.forEach(it => { if (it.photoBlob) map.set(it.id, URL.createObjectURL(it.photoBlob)); });
+    return map;
+  }, [items]);
+
+  useEffect(() => () => { urls.forEach(u => URL.revokeObjectURL(u)); }, [urls]);
 
   return (
     <div>
@@ -18,7 +25,7 @@ export default function Wardrobe({ onAdd }: { onAdd: () => void }) {
             <div style={{
               aspectRatio: '1', background: it.colors[0] ?? '#ddd',
               backgroundSize: 'cover', backgroundPosition: 'center',
-              backgroundImage: it.photoBlob ? `url(${blobUrl(it.photoBlob)})` : undefined,
+              backgroundImage: urls.has(it.id) ? `url(${urls.get(it.id)})` : undefined,
             }} />
             <div style={{ fontSize: 11, padding: 4, color: '#555' }}>
               {CATEGORY_LABEL[it.category]}

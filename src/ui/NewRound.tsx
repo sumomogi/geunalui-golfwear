@@ -26,28 +26,31 @@ export default function NewRound({ onRecommend }: { onRecommend: (roundId: strin
   }
 
   async function go() {
+    if (loading) return;
     if (!date) { setErr('날짜를 선택하세요'); return; }
     setLoading(true); setErr('');
     const id = crypto.randomUUID();
+    let weather;
     try {
       const key = import.meta.env.VITE_OWM_API_KEY as string;
-      const weather = await fetchWeather(Number(lat), Number(lon), date, teeOff, key);
-      await repository.saveRound({
-        id, date, teeOffTime: teeOff,
-        courseId: courseId || undefined, companionIds,
-        weather: weather.hourly.length ? weather : undefined,
-      });
-      onRecommend(id);
+      const w = await fetchWeather(Number(lat), Number(lon), date, teeOff, key);
+      weather = w.hourly.length ? w : undefined;
     } catch {
       // 날씨 실패해도 라운드는 저장하고 진행(날씨 없이 추천)
+      weather = undefined;
+    }
+    try {
       await repository.saveRound({
         id, date, teeOffTime: teeOff,
-        courseId: courseId || undefined, companionIds, weather: undefined,
+        courseId: courseId || undefined, companionIds, weather,
       });
-      onRecommend(id);
-    } finally {
+    } catch {
+      setErr('라운드 저장에 실패했습니다. 저장 공간을 확인하세요.');
       setLoading(false);
+      return;
     }
+    setLoading(false);
+    onRecommend(id);
   }
 
   return (
@@ -80,7 +83,7 @@ export default function NewRound({ onRecommend }: { onRecommend: (roundId: strin
         </div>
       </Field>
       {err && <p style={{ color: '#c33' }}>{err}</p>}
-      <PrimaryButton onClick={go}>{loading ? '날씨 불러오는 중…' : '코디 추천받기'}</PrimaryButton>
+      <PrimaryButton onClick={go} disabled={loading}>{loading ? '날씨 불러오는 중…' : '코디 추천받기'}</PrimaryButton>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { repository } from '../data/indexeddb-repository';
 import { processImage } from '../lib/image';
 import { CATEGORIES, CATEGORY_LABEL, type Category, type ClothingItem } from '../domain/types';
@@ -7,6 +7,7 @@ import { Field, Rating, PrimaryButton } from './components';
 export default function AddItem({ onDone }: { onDone: () => void }) {
   const [photo, setPhoto] = useState<Blob | undefined>();
   const [preview, setPreview] = useState<string>();
+  const previewRef = useRef<string>();
   const [category, setCategory] = useState<Category>('top');
   const [color, setColor] = useState('#1f3a5f');
   const [warmth, setWarmth] = useState(3);
@@ -16,12 +17,17 @@ export default function AddItem({ onDone }: { onDone: () => void }) {
   const [uvProtection, setUvProtection] = useState(false);
   const [brand, setBrand] = useState('');
 
+  useEffect(() => () => { if (previewRef.current) URL.revokeObjectURL(previewRef.current); }, []);
+
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (!f) return;
     const blob = await processImage(f);
+    if (previewRef.current) URL.revokeObjectURL(previewRef.current);
+    const url = URL.createObjectURL(blob);
+    previewRef.current = url;
     setPhoto(blob);
-    setPreview(URL.createObjectURL(blob));
+    setPreview(url);
   }
 
   async function save() {
@@ -39,9 +45,9 @@ export default function AddItem({ onDone }: { onDone: () => void }) {
     <div>
       <h2>옷 등록</h2>
       <Field label="사진">
-        <input type="file" accept="image/*" capture="environment" onChange={onFile} />
-        {preview && <img src={preview} alt="" style={{ width: 120, borderRadius: 10, marginTop: 8 }} />}
+        <input type="file" accept="image/*" onChange={onFile} />
       </Field>
+      {preview && <img src={preview} alt="" style={{ width: 120, borderRadius: 10, marginBottom: 12 }} />}
       <Field label="종류">
         <select value={category} onChange={e => setCategory(e.target.value as Category)}
           style={{ padding: 8, borderRadius: 8 }}>

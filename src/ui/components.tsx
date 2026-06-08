@@ -26,14 +26,15 @@ export function Rating({ value, onChange }: { value: number; onChange: (v: numbe
 }
 
 export function PrimaryButton(
-  { children, onClick, type = 'button' }:
-  { children: ReactNode; onClick?: () => void; type?: 'button' | 'submit' },
+  { children, onClick, type = 'button', disabled = false }:
+  { children: ReactNode; onClick?: () => void; type?: 'button' | 'submit'; disabled?: boolean },
 ) {
   return (
-    <button type={type} onClick={onClick}
+    <button type={type} onClick={onClick} disabled={disabled}
       style={{
         width: '100%', padding: '14px', borderRadius: 12, border: 'none',
         background: '#2f7d4f', color: '#fff', fontSize: 16, fontWeight: 600,
+        opacity: disabled ? 0.6 : 1,
       }}>{children}</button>
   );
 }
