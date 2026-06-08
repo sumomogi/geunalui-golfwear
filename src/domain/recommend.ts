@@ -1,4 +1,4 @@
-import type { RoundContext, ClothingItem } from './types';
+import type { RoundContext, ClothingItem, Outfit } from './types';
 
 export interface Targets {
   warmthPoints: number;      // 목표 보온 점수
@@ -105,4 +105,59 @@ export function scoreOutfit(
   }
 
   return { score: Math.max(0, Math.round(score)), reasons, warnings };
+}
+
+function pick<T>(arr: T[], n: number): T[] { return arr.slice(0, n); }
+
+export function recommend(
+  wardrobe: ClothingItem[],
+  ctx: RoundContext,
+): Outfit[] {
+  const targets = deriveTargets(ctx);
+  const by = (c: ClothingItem['category']) => wardrobe.filter(i => i.category === c);
+
+  // 격식 하한선을 만족하는 상의만(없으면 추천 불가)
+  const tops = by('top')
+    .filter(i => i.formality >= targets.formalityFloor)
+    .sort((a, b) => b.warmth - a.warmth);
+  const bottoms = by('bottom');
+  if (tops.length === 0 || bottoms.length === 0) return [];
+
+  // 조건부 슬롯 후보(조합 폭발 방지를 위해 슬롯별 상위 3개로 제한)
+  const needLayer = targets.needRemovableLayer || targets.warmthPoints >= 7;
+  const needOuter = targets.needWaterproof || targets.needWindbreak || targets.warmthPoints >= 7;
+  const needHat = targets.needUvProtection;
+
+  const midlayers = needLayer ? [undefined, ...pick(by('midlayer'), 3)] : [undefined];
+  const outers = needOuter
+    ? [undefined, ...pick(by('outer').sort((a, b) => Number(b.waterproof) - Number(a.waterproof)), 3)]
+    : [undefined];
+  const hats = needHat ? [undefined, ...pick(by('hat'), 2)] : [undefined];
+
+  const candidates: Outfit[] = [];
+  for (const top of pick(tops, 4)) {
+    for (const bottom of pick(bottoms, 3)) {
+      for (const mid of midlayers) {
+        for (const outer of outers) {
+          for (const hat of hats) {
+            const items = [top, bottom, mid, outer, hat]
+              .filter((x): x is ClothingItem => !!x);
+            const { score, reasons, warnings } = scoreOutfit(items, targets);
+            candidates.push({ items, score, reasons, warnings });
+          }
+        }
+      }
+    }
+  }
+
+  // 점수 내림차순, 동일 아이템 집합 중복 제거 후 상위 3
+  const seen = new Set<string>();
+  return candidates
+    .sort((a, b) => b.score - a.score)
+    .filter(o => {
+      const key = o.items.map(i => i.id).sort().join('|');
+      if (seen.has(key)) return false;
+      seen.add(key); return true;
+    })
+    .slice(0, 3);
 }

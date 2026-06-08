@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { deriveTargets, warmthPointsForTemp, scoreOutfit, layeredWarmth } from './recommend';
+import { deriveTargets, warmthPointsForTemp, scoreOutfit, layeredWarmth, recommend } from './recommend';
 import type { RoundContext, WeatherSnapshot, ClothingItem, Category } from './types';
 
 function weather(p: Partial<WeatherSnapshot>): WeatherSnapshot {
@@ -99,5 +99,49 @@ describe('scoreOutfit', () => {
       item({ category: 'top', warmth: 3 }), item({ category: 'bottom' }),
     ], targets);
     expect(withLayer.score).toBeGreaterThan(without.score);
+  });
+});
+
+describe('recommend', () => {
+  const wardrobe: ClothingItem[] = [
+    item({ category: 'top', formality: 5, warmth: 2, colors: ['#1f3a5f'] }),     // 카라티
+    item({ category: 'top', formality: 2, warmth: 2, colors: ['#cc3344'] }),     // 캐주얼티
+    item({ category: 'bottom', formality: 4, warmth: 2 }),
+    item({ category: 'midlayer', formality: 3, warmth: 4 }),
+    item({ category: 'outer', formality: 3, warmth: 4, waterproof: true }),
+    item({ category: 'hat', formality: 3, uvProtection: true }),
+  ];
+
+  it('최대 3벌, 점수 내림차순 반환', () => {
+    const out = recommend(wardrobe, { companions: [] });
+    expect(out.length).toBeGreaterThan(0);
+    expect(out.length).toBeLessThanOrEqual(3);
+    for (let i = 1; i < out.length; i++) {
+      expect(out[i - 1].score).toBeGreaterThanOrEqual(out[i].score);
+    }
+  });
+
+  it('드레스코드 5면 격식 미달 상의(formality<5)는 1등에 안 옴', () => {
+    const ctx: RoundContext = {
+      companions: [],
+      course: { id: 'c', name: '명문', dressCodeLevel: 5, sceneryColors: [], terrain: 'flat' },
+    };
+    const best = recommend(wardrobe, ctx)[0];
+    const bestTop = best.items.find(i => i.category === 'top')!;
+    expect(bestTop.formality).toBe(5);
+  });
+
+  it('추운 새벽 + 큰 일교차면 1등 코디에 탈착 레이어 포함', () => {
+    const ctx: RoundContext = {
+      companions: [],
+      weather: weather({ minTempC: 4, maxTempC: 18, tempSwingC: 14 }),
+    };
+    const best = recommend(wardrobe, ctx)[0];
+    expect(best.items.some(i => i.category === 'midlayer' || i.category === 'outer')).toBe(true);
+  });
+
+  it('상의가 아예 없으면 빈 배열', () => {
+    const out = recommend([item({ category: 'bottom' })], { companions: [] });
+    expect(out).toEqual([]);
   });
 });
