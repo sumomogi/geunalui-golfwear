@@ -8,6 +8,7 @@ export interface Targets {
   needUvProtection: boolean;
   targetBreathability: number; // 1-5
   formalityFloor: number;      // 1-5
+  // TODO(2단계): avoidBold·sceneryColors는 색 조화 점수 도입 시 사용 예정 (현재는 미사용)
   avoidBold: boolean;
   sceneryColors: string[];
 }
@@ -74,14 +75,14 @@ export function scoreOutfit(
 
   // 방수
   if (targets.needWaterproof) {
-    if (items.some(i => i.waterproof)) { score += 10; reasons.push('강수 대비 방수 아우터 포함'); }
+    if (items.some(i => i.waterproof)) { score += 10; reasons.push('강수 대비 방수 아이템 포함'); }
     else { score -= 15; warnings.push('비 예보가 있는데 방수 아이템이 없습니다 — 우산 챙기세요'); }
   }
 
   // 바람
   if (targets.needWindbreak) {
     if (items.some(i => i.category === 'outer')) { score += 6; reasons.push('바람 대비 아우터 포함'); }
-    else { score -= 6; }
+    else { score -= 6; warnings.push('바람이 강한데 아우터가 없습니다'); }
   }
 
   // 자외선
@@ -104,7 +105,7 @@ export function scoreOutfit(
     } else { score -= 30; warnings.push('드레스코드에 비해 상의가 캐주얼합니다'); }
   }
 
-  return { score: Math.max(0, Math.round(score)), reasons, warnings };
+  return { score: Math.min(100, Math.max(0, Math.round(score))), reasons, warnings };
 }
 
 function pick<T>(arr: T[], n: number): T[] { return arr.slice(0, n); }
@@ -119,7 +120,9 @@ export function recommend(
   // 격식 하한선을 만족하는 상의만(없으면 추천 불가)
   const tops = by('top')
     .filter(i => i.formality >= targets.formalityFloor)
-    .sort((a, b) => b.warmth - a.warmth);
+    .sort((a, b) =>
+      Math.abs(a.warmth - targets.warmthPoints) -
+      Math.abs(b.warmth - targets.warmthPoints));
   const bottoms = by('bottom');
   if (tops.length === 0 || bottoms.length === 0) return [];
 

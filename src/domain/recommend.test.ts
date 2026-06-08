@@ -144,4 +144,12 @@ describe('recommend', () => {
     const out = recommend([item({ category: 'bottom' })], { companions: [] });
     expect(out).toEqual([]);
   });
+
+  it('레이어가 필요한 추운 비 오는 날엔 3벌까지 추천', () => {
+    const out = recommend(wardrobe, {
+      companions: [],
+      weather: weather({ minTempC: 3, maxTempC: 16, tempSwingC: 13, maxPrecipProb: 0.6, maxWindMs: 6 }),
+    });
+    expect(out.length).toBe(3);
+  });
 });
