@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { deriveTargets, warmthPointsForTemp } from './recommend';
-import type { RoundContext, WeatherSnapshot } from './types';
+import { deriveTargets, warmthPointsForTemp, scoreOutfit, layeredWarmth } from './recommend';
+import type { RoundContext, WeatherSnapshot, ClothingItem, Category } from './types';
 
 function weather(p: Partial<WeatherSnapshot>): WeatherSnapshot {
   return {
@@ -46,5 +46,58 @@ describe('deriveTargets', () => {
 
   it('컨텍스트 없으면 격식 하한선 1', () => {
     expect(deriveTargets({ companions: [] }).formalityFloor).toBe(1);
+  });
+});
+
+function item(p: Partial<ClothingItem> & { category: Category }): ClothingItem {
+  return {
+    id: Math.random().toString(36).slice(2),
+    colors: ['#333333'], warmth: 3, formality: 3, waterproof: false,
+    uvProtection: false, breathability: 3, materials: [], ...p,
+  };
+}
+
+describe('layeredWarmth', () => {
+  it('상의+미드레이어+아우터 보온 합산', () => {
+    const items = [
+      item({ category: 'top', warmth: 2 }),
+      item({ category: 'midlayer', warmth: 3 }),
+      item({ category: 'outer', warmth: 4 }),
+    ];
+    expect(layeredWarmth(items)).toBe(9);
+  });
+});
+
+describe('scoreOutfit', () => {
+  const baseTargets = deriveTargets({ companions: [] });
+
+  it('방수 필요한데 방수 아우터 없으면 경고', () => {
+    const targets = { ...baseTargets, needWaterproof: true };
+    const items = [item({ category: 'top' }), item({ category: 'bottom' })];
+    const r = scoreOutfit(items, targets);
+    expect(r.warnings.some(w => w.includes('방수'))).toBe(true);
+  });
+
+  it('방수 필요하고 방수 아우터 있으면 이유에 포함, 경고 없음', () => {
+    const targets = { ...baseTargets, needWaterproof: true };
+    const items = [
+      item({ category: 'top' }), item({ category: 'bottom' }),
+      item({ category: 'outer', waterproof: true }),
+    ];
+    const r = scoreOutfit(items, targets);
+    expect(r.reasons.some(x => x.includes('방수'))).toBe(true);
+    expect(r.warnings.length).toBe(0);
+  });
+
+  it('탈착 레이어 필요할 때 미드레이어 있으면 점수가 더 높다', () => {
+    const targets = { ...baseTargets, needRemovableLayer: true, warmthPoints: 7 };
+    const withLayer = scoreOutfit([
+      item({ category: 'top', warmth: 3 }), item({ category: 'bottom' }),
+      item({ category: 'midlayer', warmth: 4 }),
+    ], targets);
+    const without = scoreOutfit([
+      item({ category: 'top', warmth: 3 }), item({ category: 'bottom' }),
+    ], targets);
+    expect(withLayer.score).toBeGreaterThan(without.score);
   });
 });
