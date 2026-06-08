@@ -120,9 +120,11 @@ export function recommend(
   // 격식 하한선을 만족하는 상의만(없으면 추천 불가)
   const tops = by('top')
     .filter(i => i.formality >= targets.formalityFloor)
-    .sort((a, b) =>
-      Math.abs(a.warmth - targets.warmthPoints) -
-      Math.abs(b.warmth - targets.warmthPoints));
+    .sort((a, b) => {
+      // warmthPoints(1~9)를 단일 아이템 warmth 스케일(1~5)로 환산해 비교
+      const target = Math.min(5, targets.warmthPoints);
+      return Math.abs(a.warmth - target) - Math.abs(b.warmth - target);
+    });
   const bottoms = by('bottom');
   if (tops.length === 0 || bottoms.length === 0) return [];
 

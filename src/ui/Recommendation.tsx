@@ -44,6 +44,13 @@ export default function Recommendation(
 
   if (!ready) return <p>추천 계산 중…</p>;
 
+  if (!round) return (
+    <p>
+      라운드를 찾을 수 없습니다.{' '}
+      <button onClick={onBack} style={{ border: 'none', background: 'none', color: '#2f7d4f' }}>← 라운드</button>
+    </p>
+  );
+
   return (
     <div>
       <button onClick={onBack} style={{ border: 'none', background: 'none', color: '#2f7d4f' }}>← 라운드</button>
